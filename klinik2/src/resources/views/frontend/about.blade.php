@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'About | Klinik Bersama')
+@section('title', 'About | Klinik SehatLah')
 
 @push('assets')
     <!-- Libraries Stylesheet -->
@@ -40,29 +40,33 @@
 
 
     <!-- About Start -->
-    <div class="container-xxl py-5">
+    <div class="container-xxl py-5 bg-light">
         <div class="container">
             <div class="row g-5">
+                <!-- Gambar -->
                 <div class="col-lg-6 wow fadeIn" data-wow-delay="0.1s">
                     <div class="d-flex flex-column">
-                        <img class="img-fluid rounded w-75 align-self-end" src="img/about-1.jpg" alt="">
-                        <img class="img-fluid rounded w-50 bg-white pt-3 pe-3" src="img/about-2.jpg" alt="" style="margin-top: -25%;">
+                        <img class="img-fluid rounded w-75 align-self-end" src="{{ asset('assets/klinik/img/about-1.jpg') }}" alt="Tentang Kami 1">
+                        <img class="img-fluid rounded w-50 bg-white pt-3 pe-3" src="{{ asset('assets/klinik/img/about-2.jpg') }}" alt="Tentang Kami 2" style="margin-top: -25%;">
                     </div>
                 </div>
+                
+                <!-- Teks -->
                 <div class="col-lg-6 wow fadeIn" data-wow-delay="0.5s">
-                    <p class="d-inline-block border rounded-pill py-1 px-4">About Us</p>
-                    <h1 class="mb-4">Why You Should Trust Us? Get Know About Us!</h1>
-                    <p>Tempor erat elitr rebum at clita. Diam dolor diam ipsum sit. Aliqu diam amet diam et eos. Clita erat ipsum et lorem et sit, sed stet lorem sit clita duo justo magna dolore erat amet</p>
-                    <p class="mb-4">Stet no et lorem dolor et diam, amet duo ut dolore vero eos. No stet est diam rebum amet diam ipsum. Clita clita labore, dolor duo nonumy clita sit at, sed sit sanctus dolor eos.</p>
-                    <p><i class="far fa-check-circle text-primary me-3"></i>Quality health care</p>
-                    <p><i class="far fa-check-circle text-primary me-3"></i>Only Qualified Doctors</p>
-                    <p><i class="far fa-check-circle text-primary me-3"></i>Medical Research Professionals</p>
-                    <a class="btn btn-primary rounded-pill py-3 px-5 mt-3" href="">Read More</a>
+                    <p class="d-inline-block border rounded-pill py-1 px-4 text-secondary">Tentang Kami</p>
+                    <h2 class="mb-4 text-primary">Klinik Dengan Pelayanan Kesehatan Yang Terjangkau</h2>
+                    <p>Kami adalah klinik yang memberikan layanan kesehatan dasar dengan fokus pada kenyamanan dan keterjangkauan untuk masyarakat sekitar. Berpengalaman melayani pasien dari berbagai kalangan, kami percaya bahwa setiap orang berhak mendapatkan perawatan yang layak.</p>
+                    <p class="mb-4">Dengan tenaga medis yang ramah dan fasilitas sederhana namun memadai, kami siap membantu Anda menjaga kesehatan sehari-hari tanpa perlu jauh-jauh ke rumah sakit besar.</p>
+                    <p><i class="far fa-check-circle text-primary me-3"></i>Pelayanan cepat dan ramah</p>
+                    <p><i class="far fa-check-circle text-primary me-3"></i>Dokter yang sudah berpengalaman</p>
+                    <p><i class="far fa-check-circle text-primary me-3"></i>Harga terjangkau untuk semua kalangan</p>
+                    <a class="btn btn-outline-primary rounded-pill py-3 px-5 mt-3" href="{{ url('/appointment') }}">Appointment Now</a>
                 </div>
             </div>
         </div>
     </div>
     <!-- About End -->
+
 
     <!-- Feature Start -->
     <div class="container-fluid bg-primary overflow-hidden my-5 px-lg-0">
@@ -137,78 +141,68 @@
         <div class="container">
             <div class="text-center mx-auto mb-5 wow fadeInUp" data-wow-delay="0.1s" style="max-width: 600px;">
                 <p class="d-inline-block border rounded-pill py-1 px-4">Doctors</p>
-                <h1>Our Experience Doctors</h1>
+                <h1>Our Experienced Doctors</h1>
             </div>
-            <div class="row g-4">
-                <div class="col-lg-3 col-md-6 wow fadeInUp" data-wow-delay="0.1s">
-                    <div class="team-item position-relative rounded overflow-hidden">
-                        <div class="overflow-hidden">
-                            <img class="img-fluid" src="img/team-1.jpg" alt="">
-                        </div>
-                        <div class="team-text bg-light text-center p-4">
-                            <h5>Rizky Dwi</h5>
-                            <p class="text-primary">Department</p>
-                            <div class="team-social text-center">
-                                <a class="btn btn-square" href=""><i class="fab fa-facebook-f"></i></a>
-                                <a class="btn btn-square" href=""><i class="fab fa-twitter"></i></a>
-                                <a class="btn btn-square" href=""><i class="fab fa-instagram"></i></a>
+            <div class="row g-4 justify-content-center">
+                @php
+                    $socialMedia = [
+                        'Dr. Putra Daffa' => [
+                            'instagram' => 'https://www.instagram.com/putradaffad',
+                            'github' => 'https://github.com/putradaffad',
+                        ],
+                        'Dr. Rizky Dwi' => [
+                            'instagram' => 'https://www.instagram.com/rizkydnz',
+                            'github' => 'https://github.com/rizkydnz',
+                        ],
+                        'Dr. Muhammad Arifin' => [
+                            'instagram' => 'https://www.instagram.com/arifin.sulistiono',
+                            'github' => 'https://github.com/arifinsulistiono',
+                        ],
+                    ];
+                @endphp
+
+                @foreach ($doctors as $index => $doctor)
+                    <div class="col-lg-3 col-md-6 wow fadeInUp" data-wow-delay="{{ 0.1 + $index * 0.2 }}s">
+                        <div class="team-item position-relative rounded overflow-hidden">
+                            <div class="overflow-hidden">
+                                <img class="img-fluid" src="{{ asset($doctor->foto) }}" alt="{{ $doctor->nama }}">
+                            </div>
+                            <div class="team-text bg-light text-center p-4">
+                                <h5>{{ $doctor->nama }}</h5>
+                                <p class="text-primary">{{ $doctor->spesialis }}</p>
+                                <div class="team-social text-center">
+                                    @if (isset($socialMedia[$doctor->nama]['instagram']))
+                                        <a class="btn btn-square" href="{{ $socialMedia[$doctor->nama]['instagram'] }}" target="_blank">
+                                            <i class="fab fa-instagram"></i>
+                                        </a>
+                                    @endif
+                                    @if (isset($socialMedia[$doctor->nama]['github']))
+                                        <a class="btn btn-square" href="{{ $socialMedia[$doctor->nama]['github'] }}" target="_blank">
+                                            <i class="fab fa-github"></i>
+                                        </a>
+                                    @endif
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
-                <div class="col-lg-3 col-md-6 wow fadeInUp" data-wow-delay="0.3s">
-                    <div class="team-item position-relative rounded overflow-hidden">
-                        <div class="overflow-hidden">
-                            <img class="img-fluid" src="img/team-2.jpg" alt="">
-                        </div>
-                        <div class="team-text bg-light text-center p-4">
-                            <h5>Muhammad Arifin</h5>
-                            <p class="text-primary">Department</p>
-                            <div class="team-social text-center">
-                                <a class="btn btn-square" href=""><i class="fab fa-facebook-f"></i></a>
-                                <a class="btn btn-square" href=""><i class="fab fa-twitter"></i></a>
-                                <a class="btn btn-square" href=""><i class="fab fa-instagram"></i></a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-lg-3 col-md-6 wow fadeInUp" data-wow-delay="0.5s">
-                    <div class="team-item position-relative rounded overflow-hidden">
-                        <div class="overflow-hidden">
-                            <img class="img-fluid" src="img/team-3.jpg" alt="">
-                        </div>
-                        <div class="team-text bg-light text-center p-4">
-                            <h5>Putra Daffa</h5>
-                            <p class="text-primary">Department</p>
-                            <div class="team-social text-center">
-                                <a class="btn btn-square" href=""><i class="fab fa-facebook-f"></i></a>
-                                <a class="btn btn-square" href=""><i class="fab fa-twitter"></i></a>
-                                <a class="btn btn-square" href=""><i class="fab fa-instagram"></i></a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                @endforeach
             </div>
         </div>
     </div>
     <!-- Team End -->
 
-    <!-- Back to Top -->
-    <a href="#" class="btn btn-lg btn-primary btn-lg-square rounded-circle back-to-top"><i class="bi bi-arrow-up"></i></a>
-
-
     <!-- JavaScript Libraries -->
     <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="lib/wow/wow.min.js"></script>
-    <script src="lib/easing/easing.min.js"></script>
-    <script src="lib/waypoints/waypoints.min.js"></script>
-    <script src="lib/counterup/counterup.min.js"></script>
-    <script src="lib/owlcarousel/owl.carousel.min.js"></script>
-    <script src="lib/tempusdominus/js/moment.min.js"></script>
-    <script src="lib/tempusdominus/js/moment-timezone.min.js"></script>
-    <script src="lib/tempusdominus/js/tempusdominus-bootstrap-4.min.js"></script>
+    <script src="{{ asset('lib/wow/wow.min.js') }}"></script>
+    <script src="{{ asset('lib/easing/easing.min.js') }}"></script>
+    <script src="{{ asset('lib/waypoints/waypoints.min.js') }}"></script>
+    <script src="{{ asset('lib/counterup/counterup.min.js') }}"></script>
+    <script src="{{ asset('lib/owlcarousel/owl.carousel.min.js') }}"></script>
+    <script src="{{ asset('lib/tempusdominus/js/moment.min.js') }}"></script>
+    <script src="{{ asset('lib/tempusdominus/js/moment-timezone.min.js') }}"></script>
+    <script src="{{ asset('lib/tempusdominus/js/tempusdominus-bootstrap-4.min.js') }}"></script>
 
     <!-- Template Javascript -->
-    <script src="js/main.js"></script>
+    <script src="{{ asset('js/main.js') }}"></script>
 @endsection
