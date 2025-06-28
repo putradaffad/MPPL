@@ -9,13 +9,15 @@ use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Filament\Tables\Columns\ImageColumn;
+use Filament\Forms\Components\FileUpload;
 use Illuminate\Support\Str;
 
 class TransactionResource extends Resource
 {
     protected static ?string $model = Transaction::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationIcon = 'heroicon-o-credit-card';
     protected static ?string $navigationLabel = 'Transaksi';
     protected static ?string $pluralModelLabel = 'Transaksi';
     protected static ?string $modelLabel = 'Transaksi';
@@ -28,7 +30,7 @@ class TransactionResource extends Resource
                     ->label('Pasien')
                     ->relationship('appointment', 'nama')
                     ->searchable()
-                    ->live() // agar bisa trigger reactive change
+                    ->live()
                     ->required()
                     ->afterStateUpdated(function ($state, callable $set) {
                         $appointment = \App\Models\Appointment::find($state);
@@ -43,7 +45,7 @@ class TransactionResource extends Resource
                 Forms\Components\TextInput::make('invoice_code')
                     ->label('Kode Invoice (Otomatis)')
                     ->disabled()
-                    ->dehydrated() // biar tetap dikirim ke model
+                    ->dehydrated()
                     ->required(),
 
                 Forms\Components\TextInput::make('amount')
@@ -61,6 +63,26 @@ class TransactionResource extends Resource
                     ])
                     ->required()
                     ->default('Belum Lunas'),
+
+                Forms\Components\Select::make('payment_method')
+                    ->label('Metode Pembayaran')
+                    ->options([
+                        'BCA' => 'Transfer BCA',
+                        'MANDIRI' => 'Transfer Mandiri',
+                        'DANA' => 'Dana',
+                    ])
+                    ->required()
+                    ->searchable(),
+
+                Forms\Components\FileUpload::make('bukti_pembayaran')
+                    ->label('Bukti Pembayaran')
+                    ->directory('uploads') // ini akan menyimpan ke public/uploads
+                    ->disk('local')        // default ke public_path
+                    ->visibility('public')
+                    ->image()
+                    ->preserveFilenames()
+                    ->enableDownload()
+                    ->enableOpen(),
             ]);
     }
 
@@ -90,11 +112,16 @@ class TransactionResource extends Resource
                     ->money('IDR', true),
 
                 Tables\Columns\BadgeColumn::make('status')
+                    ->label('Status')
                     ->colors([
                         'danger' => 'Belum Lunas',
                         'success' => 'Lunas',
-                    ])
-                    ->label('Status'),
+                    ]),
+
+                Tables\Columns\TextColumn::make('payment_method')
+                    ->label('Metode Pembayaran')
+                    ->sortable()
+                    ->searchable(),
 
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('Tanggal')
@@ -106,6 +133,11 @@ class TransactionResource extends Resource
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
+
+                Tables\Columns\ImageColumn::make('bukti_pembayaran')
+                    ->label('Bukti')
+                    ->disk('public')
+                    ->height(80),
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),

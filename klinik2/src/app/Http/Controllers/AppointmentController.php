@@ -2,10 +2,15 @@
 
 namespace App\Http\Controllers;
 
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use App\Models\Appointment;
 use App\Models\Transaction;
 use App\Models\Dokter;
+use App\Mail\AppointmentApprovedMail;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\PaymentSuccessMail;
+
 
 class AppointmentController extends Controller
 {
@@ -20,6 +25,16 @@ class AppointmentController extends Controller
             'time' => 'required',
             'dokter_id' => 'required|exists:dokters,id',
         ]);
+        // Cek apakah email sudah punya appointment yang belum lunas
+        $existingAppointment = Appointment::where('email', $request->email)
+        ->whereHas('transaction', function ($q) {
+            $q->where('status', '!=', 'Lunas');
+        })
+        ->first();
+
+    if ($existingAppointment) {
+        return redirect()->back()->with('error', 'Anda sudah memiliki janji temu yang belum dibayar.');
+    }
 
         Appointment::create([
             'nama' => $request->nama,
@@ -68,54 +83,99 @@ class AppointmentController extends Controller
             'email' => 'required|email'
         ]);
 
-        $appointment = Appointment::where('email', $request->email)
+        $appointments = Appointment::where('email', $request->email)
             ->with(['dokter', 'diagnosa.resep.obats', 'transaction'])
-            ->latest()
-            ->first();
+            ->orderBy('date', 'desc')
+            ->orderBy('time', 'desc')
+            ->get();
 
-        if (!$appointment) {
+        if ($appointments->isEmpty()) {
             return redirect()->back()->with('error', 'Data tidak ditemukan untuk email tersebut.');
         }
 
-        $transaction = $appointment->transaction;
-
-        if (!$transaction) {
-            $transaction = Transaction::create([
-                'appointment_id' => $appointment->id,
-                'invoice_code' => 'INV-' . strtoupper(uniqid()),
-                'amount' => 0, // Bisa dihitung dari resep dan jasa dokter di view
-                'status' => 'unpaid'
-            ]);
+        // Buat transaksi jika belum ada
+        foreach ($appointments as $appointment) {
+            if (!$appointment->transaction) {
+                Transaction::create([
+                    'appointment_id' => $appointment->id,
+                    'invoice_code' => 'INV-' . strtoupper(uniqid()),
+                    'amount' => 0, // dihitung di view
+                    'status' => 'Belum Lunas'
+                ]);
+            }
         }
 
-        return view('frontend.payment', compact('appointment', 'transaction'));
+        return view('frontend.payment', compact('appointments'));
     }
+
 
     // Tampilkan halaman pembayaran berdasarkan appointment_id (admin atau frontend)
     public function payment($id)
-    {
-        $appointment = Appointment::findOrFail($id);
-        $transaction = Transaction::where('appointment_id', $id)->first();
+{
+    $appointment = Appointment::with(['dokter', 'diagnosa.resep.obats'])->findOrFail($id);
+    $transaction = Transaction::where('appointment_id', $id)->first();
 
-        if (!$transaction) {
-            $transaction = Transaction::create([
-                'appointment_id' => $id,
-                'invoice_code' => 'INV-' . strtoupper(uniqid()),
-                'amount' => 150000,
-                'status' => 'unpaid'
-            ]);
-        }
-
-        return view('frontend.payment', compact('appointment', 'transaction'));
+    if (!$transaction) {
+        $transaction = Transaction::create([
+            'appointment_id' => $appointment->id,
+            'status' => 'Belum Lunas',
+        ]);
     }
+
+    return view('frontend.payment', compact('appointment', 'transaction'));
+}
 
     // Tandai transaksi sudah dibayar
-    public function pay($id)
-    {
-        $transaction = Transaction::where('appointment_id', $id)->firstOrFail();
-        $transaction->status = 'paid';
-        $transaction->save();
+    // public function pay($id)
+    // {
+    //     $transaction = Transaction::where('appointment_id', $id)->firstOrFail();
+    //     $transaction->status = 'Lunas';
+    //     $transaction->save();
 
-        return redirect()->route('appointment.payment', $id)->with('success', 'Pembayaran berhasil!');
+    //     return redirect()->route('appointment.payment', $id)->with('success', 'Pembayaran berhasil!');
+    // }
+    public function pay(Request $request, $id)
+{
+    $request->validate([
+        'payment_method' => 'required',
+        'bukti_pembayaran' => 'nullable|image|max:2048'
+    ]);
+
+    $transaction = Transaction::where('appointment_id', $id)->firstOrFail();
+    $transaction->status = 'Lunas';
+    $transaction->payment_method = $request->payment_method;
+
+    if ($request->hasFile('bukti_pembayaran')) {
+        $path = $request->file('bukti_pembayaran')->store('bukti', 'public');
+        $transaction->bukti_pembayaran = $path;
     }
+
+    $transaction->save();
+
+    // Tambahkan bagian ini untuk kirim email
+    $appointment = $transaction->appointment()->with('dokter')->first();
+    Mail::to($appointment->email)->send(new PaymentSuccessMail($appointment));
+
+    return redirect()->route('appointment.payment.invoice', $id)
+        ->with('success', 'Pembayaran berhasil dan email notifikasi telah dikirim!');
+}
+
+
+public function invoice($id)
+{
+    $appointment = Appointment::with(['dokter', 'diagnosa.resep.obats', 'transaction'])->findOrFail($id);
+    $pdf = Pdf::loadView('frontend.invoice', compact('appointment'));
+    return $pdf->download('invoice_' . $appointment->id . '.pdf');
+}
+public function approve($id)
+{
+    $appointment = Appointment::findOrFail($id);
+    $appointment->status = 'approved';
+    $appointment->save();
+
+    // Kirim email notifikasi
+    Mail::to($appointment->email)->send(new AppointmentApprovedMail($appointment));
+
+    return redirect()->route('appointments.index')->with('success', 'Appointment berhasil disetujui dan email telah dikirim.');
+}
 }

@@ -11,13 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('obats', function (Blueprint $table) {
+        Schema::create('obat_resep', function (Blueprint $table) {
             $table->id();
-            $table->string('nama');
-            $table->integer('harga');
-            $table->string('kategori');
-            $table->text('deskripsi');
-            $table->enum('status', ['Sebelum Makan', 'Sesudah Makan']);
+            $table->foreignId('resep_id')->constrained()->onDelete('cascade');
+            $table->foreignId('obat_id')->constrained()->onDelete('cascade');
             $table->timestamps();
         });
     }
@@ -27,6 +24,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('obats');
+        Schema::dropIfExists('obat_resep');
     }
 };
